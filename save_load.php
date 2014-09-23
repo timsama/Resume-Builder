@@ -1,0 +1,52 @@
+<?php
+
+// include our custom php functions
+require_once 'functions.php';
+require_once 'session.php';
+require_once 'referer.php';
+
+// get a reference to the resume information
+$resumeInformation =& getSession();
+
+// make sure the user is logged in as a client account
+ensureLoggedIn('client');
+
+// validate any inputs that were posted to this page
+validate();
+
+// initialize form face
+$formface = isset($formface) ? $formface : '';
+
+// add page heading
+$formface .= addHeading(getSaveLoadDeleteStatus('Save/Load Resume Data'));
+
+// start the HTML form
+$formface .= startForm('save_load.php');
+
+// add hidden field to store this page as the page we came from
+$formface .= addHiddenField('sourceurl', 'save_load.php');
+
+// add save information
+$resumename = nonempty('resumename') ? getResumeVar('resumename') : 'Untitled' ;
+$formface .= addSubheading('Current resume: ' . $resumename);
+
+// add a field to enter a resume name if current resume is untitled
+if(! nonempty('resumename'))
+	$formface .= addDefaultValueTextField('resume_name', 'Name this resume: ', 'Untitled');
+
+// add save button and display saved message if applicable
+$formface .= appendButton('Save Current Resume', 'save_resume.php');
+
+// add list of resumes
+$options = getResumes($_SESSION['userID']);
+$formface .= addSubheading('Load an existing resume:') . addParagraph(appendOptionsFromArray($options, getResumeVar('resumename'), 'resumeid'));
+
+// add preview, load, and delete buttons, and display loaded message if applicable
+$formface .= appendButton('Preview Selected Resume', 'resume.php')
+	. appendButton('Load Selected Resume', 'load_resume.php')
+ 	. appendButton('Delete Selected Resume', 'delete_resume.php', 'return confirm(\'Are you sure you want to delete this resume?\');');
+
+// end the HTML form
+$formface .= closeForm();
+
+require 'template.php';

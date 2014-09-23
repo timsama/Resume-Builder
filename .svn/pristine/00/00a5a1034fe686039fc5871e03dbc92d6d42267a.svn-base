@@ -1,0 +1,21 @@
+<?php require_once 'functions.php' ?>
+<html>
+<head>
+	<!-- CS4540 Assignment 3 -->
+	<!-- Author: Tim Winchester -->
+    <?php echo insertStyles() ?>
+    <?php echo insertScripts() ?>
+</head>
+<body>
+	<?php echo insertTitle() ?>
+	<div id="container">
+		<div id="formface">
+			<?php echo $formface ?>
+		</div>
+		<div id="spacer"></div>
+		<div id="footer">
+			<?php echo insertFooter() ?>
+		</div>
+	</div>
+</body>
+</html>

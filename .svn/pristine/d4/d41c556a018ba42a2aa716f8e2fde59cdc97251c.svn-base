@@ -1,0 +1,158 @@
+<?php
+
+// include our custom php functions
+require_once 'functions.php';
+require_once 'session.php';
+require_once 'referer.php';
+
+// initialize form face
+$formface = '';
+
+// add page heading
+$formface .= addHeading('How to use Resume Builder');
+
+// add logging in section
+$formface .= addSubheading('Logging In');
+
+// add help paragraphs
+$formface .= addParagraph('Enter your username and password to log into your Resume Builder account. If you don\'t have a Resume Builder account, then go to the'
+	. ' registration page to create one.');
+
+// add filling out forms section
+$formface .= addSubheading('Filling Out Forms');
+
+// add help paragraphs
+$formface .= addParagraph('In order to use the resume builder, fill out all of the fields in the contact information, position sought, and employment history pages. '
+	. 'Then, view the finished resume! To navigate around the site, use the footer bar located at the bottom of each page.');
+
+$formface .= addParagraph('For example, to complete the contact information section, just click on the second icon captioned "Contact Information" to open the form. '
+	. 'In order to return to the index page, click the first icon, captioned "Index". To start over on a new resume, click the "Start New Resume" icon in the bottom '
+	. 'right corner, but be warned: your existing resume information will be erased.');
+
+// add save/load section
+$formface .= addSubheading('Saving to and Loading from the Database');
+
+// add help paragraphs
+$formface .= addParagraph('Click on the save icon in the footer menu to be taken to the Save/Load page. Clicking the Save button on that page will save all session resume'
+	. ' information to the database. Clicking the Load button after selecting an existing resume will load that resume\'s information into the session. You can also preview'
+	. ' a resume by selecting it, and clicking the Preview button. Doing so will not alter the session data.');
+
+// add technical details v3 section heading
+$formface .= addHeading('Technical Details v3.0');
+
+// add security section
+$formface .= addSubheading('Security');
+$formface .= addParagraph('HTTPS support has been added. Whenever a user goes to the login screen, they are switched to using HTTPS, and whenever they log out, they return'
+	. ' to HTTP. The password salting scheme has not changed, which is why users/administrators are not allowed to change user names--it would render the password hash for'
+	. ' that account invalid. Since user accounts were already implemented in version 2.0, not much has changed other than the addition of real names for users, and access'
+	. ' roles. Namely, Admin and Client. If a website user does not have one of the two roles (i.e. is not logged in), they are restricted to creating resumes which are not'
+	. ' saved, and visiting the help page. Additionally, certain pages are only viewable by Admins. Should a user attempt to access a page they lack permissions for, they'
+	. ' will instead encounter a "bad role" page, explaining that they lack the permissions to use that page.');
+
+// add user roles section
+$formface .= addSubheading('User Roles');
+$formface .= addParagraph('The Client role essentially is given the 2.0 version of the site, except compatible with HTTPS. Because usernames and passwords were already'
+	. ' implemented, along with an association between a resume and the user that created it, nothing really needed to change except to add a Real Name field on the'
+	. ' registration page. Multiple resumes with the same name could already exist, provided that they were associated with different users.');
+$formface .= addParagraph('The Admin role has a page where they can alter other users\' roles (they cannot change their own), as well as delete users. The database schema'
+	. ' automatically deletes any resumes associated with a user being deleted, so nothing else needed to be done to implement this. The administrator page also uses AJAX'
+	. ' to update itself when interacting with the database. Administrators can temporarily decrease their privilege level to that of a regular client, in order to have the'
+	. ' same view that a client would, for troubleshooting purposes. In order to restore their privilege level, they must log out of their account, and then log back in.');
+
+// add GET section
+$formface .= addSubheading('Resume Access');
+$formface .= addParagraph('Any non-logged in user may view any resume of any user by going to resume.php and passing in the name (i.e. resume name) and username associated'
+	. ' with that resume as URL variables. If this assignment were to continue past this week, a private/non-private status would be added to each resume, which would control'
+	. ' whether this display method should work for that resume. However, because the purpose of this access method is to ensure ease of grading, this has not been implemented.');
+
+// add code reuse section
+$formface .= addSubheading('Code Re-Use');
+$formface .= addParagraph('The pages preview_resume.php and resume.php have been refactored and merged into resume.php, allowing the display formatting of resume.php to be used'
+	. ' in all four cases: completed (current) resume display, incomplete (current) resume display, resume preview (of resumes not in session variables), and url variable preview'
+	. ' (for non-logged in users). Similarly, start_page.php has been merged into template.php, allowing a single display template to be used.');
+
+// add referer section
+$formface .= addSubheading('HTTP Referers');
+$formface .= addParagraph('The site has been modified to automatically return users to the page they came from in the case of logging into an account, or decreasing their privilege'
+	. ' level (admin users only). In the case of admin users, they will be automatically moved to the index page upon decreasing their privileges if a client would encounter the "bad'
+	. ' role" page upon trying to access the page referenced in the HTTP referer. Because not all pages need to be returned to, the server variable HTTP_REFERER is stored into the'
+	. ' session variable "http_referer" on pages that should be returned to. This prevents users from being returned to the login screen after logging in, in the case where a previous'
+	. ' login attempt failed and redirected them back to the login screen (and therefore setting their $_SERVER[\'HTTP_REFERER\'] to the login page.');
+
+// add icons section
+$formface .= addSubheading('Icons');
+$formface .= addParagraph('Each icon image used on the site was created by me in Paint.NET. With the exception of the Admin button (which is intended to be attention-grabbing, to always'
+	. ' make it obvious to a developer to the fact that admin permissions are currently allowed), they were created to give a consistent look and feel to the site.');
+
+// add technical details v2 section heading
+$formface .= addHeading('Technical Details v2.0');
+
+// add validation section
+$formface .= addSubheading('Validation');
+$formface .= addParagraph('Validation is mostly the same as in the original version, except that some checking has been added to enforce YYYY-MM-DD formatting of dates.'
+	. ' This was done via applying a regular expression (^\d\d\d\d-\d\d?-\d\d?$) in both PHP and JavaScript. It ensures the format is correct, but does not ensure that'
+	. ' the month is less than 13, or that the day is less than 30, 31, or 29 (depending on month). In the case that a correctly-formatted but invalid date (i.e. 2003-44-86)'
+	. ' is submitted, the database will save it as 0000-00-00.');
+
+// add security section
+$formface .= addSubheading('Security');
+$formface .= addParagraph('HTTPS was not used, because we haven\'t learned about it yet. However, each resume is tied to a user account, and each user can only see their'
+	. ' resumes. The passwords are stored using a SHA256 hash salted with the username. Even though this is an easy-to-guess salting scheme, it still makes rainbow table'
+	. ' use impossible, because the rainbow table would have to enumerate not only the passwords, but each version of a password salted with every possible username. The'
+	. ' passwords are only stored as hashes, so there is no risk of mass password loss.');
+
+// add database section
+$formface .= addSubheading('Database Information');
+$formface .= addParagraph('The database schema has been significantly modified from last week\'s submission by making changes the grader suggested. In addition, contact'
+	. ' information is specific to each resume rather than specific to each user account. The SQL used also is now in the form of PDO prepared statements, as opposed to'
+	. ' the stored procedures created for last week. User input is sanitized by using PHP\'s bindParam to assign each piece of query data.');
+
+// add php objects section
+$formface .= addSubheading('PHP Objects');
+$formface .= addParagraph('All database interactions were encapsulated in the DatabaseBackend class. Wrapper functions were used in sql_functions.php to avoid having to'
+	. ' connect to the database immediately upon loading a page, unless it is necessary for the load. Instead, the database object (and connection) are created when needed'
+	. ' (lazy initialization) and destroyed once they are no longer needed (when the wrapper function ends).');
+
+// add technical details v1 heading
+$formface .= addHeading('Technical Details v1.0');
+
+// add validation section
+$formface .= addSubheading('Validation');
+$formface .= addParagraph('Because fields such as names vary widely, and the user should have a good deal of control over how the end product looks, validation is '
+	. 'mostly confined to seeing which fields are completely empty. It is done in two parts: the on-page validation is done with JavaScript, and the conversion from '
+	. 'POST variables to Session variables is done by PHP functions. The JavaScript informs the user of any empty fields and highlights them, while the PHP functions '
+	. 'check for the existence of all necessary variables. Since we don\'t really care what\'s in them from a variable storage standpoint, people could fake them via '
+	. 'spoofed POST headers, but since they can enter anything they want anyway, there isn\'t much point to it. The PHP does check if all variables are there before '
+	. 'allowing them to be saved as session variables; if someone is going to spoof a POST, it makes sure that they at least have the decency to cover all fields.');
+
+// add resume section
+$formface .= addSubheading('Building the Resume');
+$formface .= addParagraph('All incoming variables are checked for existence before use, allowing the user to see partially-completed resumes in all their half-finished '
+	. 'glory. I styled the resume after the one I used to get my current job. It\'s not exactly the same, but it looks close.');
+
+// add footer section
+$formface .= addSubheading('The Floating Footer');
+$formface .= addParagraph('The footer took a lot of styling to get to work correctly. It uses fixed positioning to put itself at the bottom of the page, and uses '
+	. 'table-cell divs for each icon in order to control spacing. There is an invisible spacer div behind it to make sure the form face doesn\'t get pushed underneath. '
+	. 'The final product doesn\'t gum up scrolling when the page is very tall (as in the case of the employment history page).');
+
+// add template section
+$formface .= addSubheading('Generating HTML');
+$formface .= addParagraph('All of the pages are based on PHP templates. The form pages themselves just build a form face string and then send it to the template to be '
+	. 'output. The advantage of this is that it would allow a visual redesign of the site very easily; just change the templates and you\'re done! I also relied '
+	. 'heavily on PHP functions and JavaScript functions to build page elements for me. The end result is a much cleaner separation of model (form inputs), view (CSS '
+	. 'and PHP templates), and controller (PHP and JavaScript functions). Especially since we have to use this site as a baseline for the next few weeks\' assignments, '
+	. 'I\'m glad that I did it this way.');
+
+// add remove buttons section
+$formface .= addSubheading('"Remove Section" Buttons');
+$formface .= addParagraph('I\'m particularly happy with the Remove Section buttons on the employment history page. It was initially a pain to keep track of what indices '
+	. 'were available to use, and would sometimes have multiple divs with the same ID, until the idea hit me to just increment the index endlessly, like we would in a '
+	. 'database autoincrementing primary key. This took the addSection function\'s index finder from O(N) to O(1) (not that it really matters with so few employment history '
+	. 'entries), and since the backend handles the variable array, there is no later cost to ordering the elements into the POST array. The most important part, though, is '
+	. 'that it\'s much less buggy, and is easier to understand and maintain.');
+
+// put everything in a helpparagraphs div to style it
+$formface = appendDiv($formface, 'helpparagraphs');
+
+require 'template.php';

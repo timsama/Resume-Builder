@@ -1,0 +1,59 @@
+<?php
+
+// include our custom php functions
+require_once 'functions.php';
+require_once 'session.php';
+
+// redirect to a secure connection
+redirectToHTTPS();
+
+// initialize form face
+$formface = '';
+
+// validate username and password
+if(validate()){
+
+	// get a reference to the resume information
+	$resumeInformation =& getSession();
+	
+	// if there is an http referer, go back to it
+	if(isset($_SESSION['http_referer'])){
+		header('Location: ' . $_SESSION['http_referer']);
+	} else {
+		// otherwise, move to the index page for a new resume
+		header('Location: index.php');
+	}
+} else {
+	// add page headings
+	$formface .= addHeading('Resume Builder');
+	$formface .= addSubheading('Enter your username and password to log in:');	
+
+	// display an entry prompt depending on whether this is a first or subsequent attempt
+	if(registrationAttempted()){
+		// inform user their account was not added successfully
+		$formface .= addSubheading('Username or password is incorrect. Please try again:');
+	}
+
+	// start the HTML form
+	$formface .= startForm('login.php');
+	
+	// add hidden field to store this page as the page we came from
+	$formface .= addHiddenField('sourceurl', 'login.php');
+	
+	// add user name and password fields
+	$formface .= addParagraph(addTextField('username', 'User Name: ') . '<br>' . addPasswordField('password', 'Password: '));
+	
+	// add submit and cancel buttons
+	$formface .= appendSubmitButton();
+	$formface .= appendCancelButton();
+	
+	// add link to registration page
+	$formface .= addSubheading('Don\'t have an account?');
+	$formface .= openParagraph('') . appendLink('Click Here', 'register.php') . closeParagraph(' to go to the registration page.');
+	$formface .= openParagraph('') . appendLink('Click Here', 'help.php') . closeParagraph(' to go to the help page.');
+}
+
+// end the HTML form
+$formface .= closeForm();
+
+require 'template.php';

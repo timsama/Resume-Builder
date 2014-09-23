@@ -1,0 +1,123 @@
+@CHARSET "ISO-8859-1";
+
+/* make the everything div use relative positioning */
+#everything {
+	position: relative;
+	width: 100%;
+}
+
+/* make the individual footer buttons act as if table cells */
+.footercell {
+	float: left;
+	margin-top: 15px;
+	margin-bottom: 15px;
+	margin-left: 1%;
+	margin-right: 1%;
+}
+
+/* make the individual footer buttons act as if table cells */
+.footercellright {
+	float: right;
+	margin-top: 15px;
+	margin-bottom: 15px;
+	margin-left: 1%;
+	margin-right: 1%;
+}
+
+/* make centereddiv class elements centered */
+.centereddiv {
+	text-align: center;
+	float: left;
+}
+
+/* make textareas non-resizeable */
+textarea {
+	resize: none;
+}
+
+/* formatting for phone number + address on resume */
+.topborder {
+	position: relative;
+	top: 0;
+	width: 100%;
+	text-align: center;
+	letter-spacing: 5px;
+}
+
+/* formatting for title headings (i.e. name on resume) */
+h1 {
+	text-align: center;
+	font-size: 500%;
+}
+
+/* formatting for descriptions (i.e. position sought and employment history on resume) */
+.description {
+	width: 70%;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.description p {
+	text-indent: 1.5em;
+}
+
+.description h3 {
+	font-style: oblique;
+}
+
+/* container for entire page */
+#container {
+	margin: 0px;
+	padding: 0px;
+	width: auto;
+	height: 90%;
+}
+
+/* container for form face */
+#formface {
+	height: auto;
+	padding: 0px;
+}
+
+#spacer {
+	height: 150px;
+	width: 100%;
+	padding: 0px;
+	margin: 0px;
+}
+
+/* make the footer float at the bottom center of the page with a gray background */
+#footer {
+	background: #CCC;
+	position: fixed;
+	left: 0;
+	bottom: 0;
+	width: 100%;
+	height: 125px;
+	text-align: center;
+	display: inline-block;
+	margin: 0px;
+	white-space: no-wrap;
+	overflow: hidden;
+}
+
+/* make the remove buttons in employee history invisible by default */
+.removebutton {
+	display: none;
+}
+
+/* highlight incomplete fields */
+.incompletefield {
+	background: #F00;
+}
+
+/* make help paragraphs smaller horizontally than the screen */
+.helpparagraphs {
+	width: 60%;
+	min-width: 900px;
+}
+
+/* make cells on the admin page of uniform width */
+td {
+	width: 150px;
+}

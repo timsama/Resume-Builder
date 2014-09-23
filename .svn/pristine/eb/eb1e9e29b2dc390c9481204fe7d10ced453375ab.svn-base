@@ -1,0 +1,430 @@
+<?php
+// represents the database backend of the resume builder
+class DatabaseBackend
+{
+	private $database;
+
+	// constructs a new PDO object and stores it in $database
+	public function __construct($connectionstring = 'mysql:host=atr.eng.utah.edu;dbname=cs4540_twinches', $dbusername = 'cs4540_twinches', $dbpassword = '014720881'){
+
+		// connect to the database
+		$this->database = new PDO($connectionstring, $dbusername, $dbpassword);
+	}
+	
+	// destroys the PDO object
+	public function __destruct(){
+		$this->database = NULL;
+	}
+
+	// adds a new user to the database and returns the corresponding user ID, or 0 if it failed (handled by MySQL)
+	public function insertUser($username, $password){
+		
+		// prepare an insert statement
+		$query = $this->database->prepare('INSERT INTO ps5_user (username, password_hash) VALUES (:usrname, :pwdhash);');
+
+		// hash the user's password salted with their username
+		$pwdhash = hash('sha256', $username . $password);
+
+		// bind the user's input fields into the query
+		$query->bindParam(':usrname', $username, PDO::PARAM_STR);
+		$query->bindParam(':pwdhash', $pwdhash, PDO::PARAM_STR);
+
+		// insert the new user
+		$query->execute();
+
+		// return the new user's ID
+		return $this->database->lastInsertId();
+	}
+
+	// logs a user in (given a username and password) and returns their user ID or 0 if it failed
+	public function login($username, $password){
+		
+		// prepare a select statement
+		$query = $this->database->prepare('SELECT user_pk FROM ps5_user WHERE username = :usrname AND password_hash = :pwdhash');
+
+		// hash the user's password salted with their username
+		$pwdhash = hash('sha256', $username . $password);
+
+		// bind the user's input fields into the query
+		$query->bindParam(':usrname', $username, PDO::PARAM_STR);
+		$query->bindParam(':pwdhash', $pwdhash, PDO::PARAM_STR);
+
+		// insert the new user
+		$query->execute();
+
+		// get the user's ID and return it
+		if($userid = $query->fetch())
+			return $userid['user_pk'];
+
+		// username or password was invalid. return 0
+		return 0;
+	}
+	
+	// creates a new resume with the given name, user_fk and description. returns either the resume id, or 0 if it failed (handled by MySQL)
+	private function addResume($userid, $name, $description = ''){
+		
+		// prepare an insert statement
+		$query = $this->database->prepare('INSERT INTO ps5_resume (name, user_fk, description) VALUES (:name, :userid, :description);');
+		
+		// bind the user's input fields into the query
+		$query->bindParam(':userid', $userid, PDO::PARAM_INT);
+		$query->bindParam(':name', $name, PDO::PARAM_STR);
+		$query->bindParam(':description', $description, PDO::PARAM_STR);
+		
+		// insert the new user
+		$query->execute();
+		
+		// return the new user's ID
+		return $this->database->lastInsertId();
+	}
+	
+	// creates a new employment history entry with the given information. returns either the employment history id, or 0 if it failed (handled by MySQL)
+	private function addEmploymentHistory($resumeid, $jobtitle, $startdate, $enddate, $positiondescription){
+		
+		// prepare an insert statement
+		$query = $this->database->prepare('INSERT INTO ps5_employment_history (resume_fk, jobtitle, startdate, enddate, positiondescription)'
+				 . ' VALUES (:resumeid, :jobtitle, :startdate, :enddate, :positiondescription);');
+		
+		// bind the user's input fields into the query
+		$query->bindParam(':resumeid', $resumeid, PDO::PARAM_INT);
+		$query->bindParam(':jobtitle', $jobtitle, PDO::PARAM_STR);
+		$query->bindParam(':startdate', $startdate, PDO::PARAM_STR);
+		$query->bindParam(':enddate', $enddate, PDO::PARAM_STR);
+		$query->bindParam(':positiondescription', $positiondescription, PDO::PARAM_STR);
+		
+		// insert the new user
+		$query->execute();
+		
+		// return the new user's ID
+		return $this->database->lastInsertId();
+	}
+	
+	// creates a new contact info entry with the given information. returns true if the insertion succeeded, false if it failed
+	private function addContactInfo($resumeid, $name, $phone, $address){
+		
+		// prepare an insert statement
+		$query = $this->database->prepare('INSERT INTO ps5_contact_info (resume_fk, fullname, phonenumber, address)'
+				 . ' VALUES (:resumeid, :name, :phone, :address);');
+		
+		// bind the user's input fields into the query
+		$query->bindParam(':resumeid', $resumeid, PDO::PARAM_INT);
+		$query->bindParam(':name', $name, PDO::PARAM_STR);
+		$query->bindParam(':phone', $phone, PDO::PARAM_STR);;
+		$query->bindParam(':address', $address, PDO::PARAM_STR);
+		
+		// insert the new user and return true if successful, false if failed
+		return $query->execute();
+	}
+	
+	// updates a contact info entry with the given information. returns true if the update succeeded, false if it failed
+	private function updateContactInfo($resumeid, $name, $phone, $address){
+		
+		// prepare an update statement
+		$query = $this->database->prepare('UPDATE ps5_contact_info SET fullname = :name, phonenumber = :phone, address = :address'
+			. ' WHERE resume_fk = :resumeid');
+		
+		// bind the user's input fields into the query
+		$query->bindParam(':resumeid', $resumeid, PDO::PARAM_INT);
+		$query->bindParam(':name', $name, PDO::PARAM_STR);
+		$query->bindParam(':phone', $phone, PDO::PARAM_STR);;
+		$query->bindParam(':address', $address, PDO::PARAM_STR);
+		
+		// insert the new user and return true if successful, false if failed
+		return $query->execute();
+	}
+	
+	// updates a resume with the given information. returns true if the update succeeded, false if it failed
+	private function updateResume($resumeid, $description){
+		
+		// prepare an update statement
+		$query = $this->database->prepare('UPDATE ps5_resume SET description = :description'
+			. ' WHERE resume_pk = :resumeid');
+		
+		// bind the user's input fields into the query
+		$query->bindParam(':resumeid', $resumeid, PDO::PARAM_INT);
+		$query->bindParam(':description', $description, PDO::PARAM_STR);
+		
+		// insert the new user and return true if successful, false if failed
+		return $query->execute();
+	}
+	
+	// deletes a resume with the given information. returns true if the delete succeeded, false if it failed
+	public function deleteResume($resumeid, $userid){
+		
+		// prepare an update statement
+		$query = $this->database->prepare('DELETE FROM ps5_resume WHERE resume_pk = :resumeid AND user_fk = :userid');
+		
+		// bind the user's input fields into the query
+		$query->bindParam(':resumeid', $resumeid, PDO::PARAM_INT);
+		$query->bindParam(':userid', $userid, PDO::PARAM_INT);
+		
+		// insert the new user and return true if successful, false if failed
+		return $query->execute();
+	}
+	
+	// gets the list of resumes associated with a user ID and returns it as an array of names and resume ids
+	public function getResumes($userid){
+		
+		// prepare a select statement
+		$query = $this->database->prepare('SELECT resume_pk, name FROM ps5_resume WHERE user_fk = :userid');
+		
+		// bind the user's input fields into the query
+		$query->bindParam(':userid', $userid, PDO::PARAM_INT);
+		
+		// get the user's resumes
+		$query->execute();
+		
+		// build an empty array to hold the resume names and ids
+		$resumes = array();
+		
+		// loop over the resumes associated with the user and add them individually to the array
+		while($row = $query->fetch()){
+			$resumes[$row['resume_pk']] = $row['name'];
+		}
+		
+		// return the array of resumes
+		return $resumes;
+	}
+	
+	// returns true if resumes exist for the user id
+	public function resumesExist($userid){
+		
+		// prepare a select statement
+		$query = $this->database->prepare('SELECT resume_pk, name FROM ps5_resume WHERE user_fk = :userid');
+		
+		// bind the user's input fields into the query
+		$query->bindParam(':userid', $userid, PDO::PARAM_INT);
+		
+		// get the user's resumes
+		$query->execute();
+		
+		// build an empty array to hold the resume names and ids
+		$resumes = array();
+		
+		// return true if any records came back
+		if($row = $query->fetch()){
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	// returns true if a resume with the given ID exists in the database
+	private function resumeExists($resumeid){
+		
+		// prepare a select statement
+		$query = $this->database->prepare('SELECT resume_pk FROM ps5_resume WHERE resume_pk = :resumeid');
+		
+		// bind the user's input fields into the query
+		$query->bindParam(':resumeid', $resumeid, PDO::PARAM_INT);
+		
+		// get the user's resumes
+		$query->execute();
+		
+		// return true if there was a record with that ID
+		return ($row = $query->fetch());
+	}
+	
+	// returns true if contact info associated with a given ID exists in the database
+	private function contactInfoExists($resumeid){
+		
+		// prepare a select statement
+		$query = $this->database->prepare('SELECT resume_fk FROM ps5_contact_info WHERE resume_fk = :resumeid');
+		
+		// bind the user's input fields into the query
+		$query->bindParam(':resumeid', $resumeid, PDO::PARAM_INT);
+		
+		// get the user's resumes
+		$query->execute();
+		
+		// return true if there was a record with that ID
+		return ($row = $query->fetch());
+	}
+	
+	// returns true if contact info associated with a given ID exists in the database
+	private function employmentHistoryExists($employmentid){
+		
+		// prepare a select statement
+		$query = $this->database->prepare('SELECT resume_fk FROM ps5_employment_history WHERE employment_history_pk = :employmentid');
+		
+		// bind the user's input fields into the query
+		$query->bindParam(':employmentid', $employmentid, PDO::PARAM_INT);
+		
+		// get the user's resumes
+		$query->execute();
+		
+		// return true if there was a record with that ID
+		return ($row = $query->fetch());
+	}
+	
+	// clears all employment history entries for a given resume
+	private function deleteEmploymentHistory($resumeid){
+		
+		// prepare a select statement
+		$query = $this->database->prepare('DELETE FROM ps5_employment_history WHERE resume_fk = :resumeid');
+		
+		// bind the user's input fields into the query
+		$query->bindParam(':resumeid', $resumeid, PDO::PARAM_INT);
+		
+		// get the user's resumes
+		$query->execute();
+		
+		// return true if there was a record with that ID
+		return ($row = $query->fetch());
+	}
+	
+	// gets resume information and contact information and returns it as an array
+	private function getStaticInfo($resumeid){
+
+		// prepare a select statement
+		$query = $this->database->prepare('SELECT name, description, fullname, phonenumber, address FROM ps5_resume JOIN ps5_contact_info ON resume_pk = resume_fk WHERE resume_fk = :resumeid');
+		
+		// bind the user's input fields into the query
+		$query->bindParam(':resumeid', $resumeid, PDO::PARAM_INT);
+		
+		// get the user's resume information
+		$query->execute();
+		
+		// if record was found, return it. otherwise, return an empty array
+		if($row = $query->fetch()){
+			return array("resumename" => $row['name'],
+					"description" => $row['description'],
+					"fullname" => $row['fullname'],
+					"phonenumber" => $row['phonenumber'],
+					"address" => $row['address']);
+		} else {
+			return array();
+		}
+	}
+	
+	// gets the list of employment history associated with a resume ID and returns it as an array
+	private function appendEmploymentHistoryToArray($resumeid, &$destarray){
+		
+		// prepare a select statement
+		$query = $this->database->prepare('SELECT * FROM ps5_employment_history WHERE resume_fk = :resumeid ORDER BY startdate ASC');
+		
+		// bind the user's input fields into the query
+		$query->bindParam(':resumeid', $resumeid, PDO::PARAM_INT);
+		
+		// get the user's employment history entries
+		$query->execute();
+		
+		// build empty arrays to hold the job titles, dates, and descriptions
+		$employment_history_pk = array();
+		$jobtitle = array();
+		$startdate = array();
+		$enddate = array();
+		$positiondescription = array();
+		
+		// loop over the histories associated with the resume and add them individually to the arrays
+		while($row = $query->fetch()){
+			array_push($employment_history_pk, $row['employment_history_pk']);
+			array_push($jobtitle, $row['jobtitle']);
+			array_push($startdate, $row['startdate']);
+			array_push($enddate, $row['enddate']);
+			array_push($positiondescription, $row['positiondescription']);
+		}
+		
+		// append employment history entries to array argument
+		$destarray['employment_history_pk'] = $employment_history_pk;
+		$destarray['jobtitle'] = $jobtitle;
+		$destarray['startdate'] = $startdate;
+		$destarray['enddate'] = $enddate;
+		$destarray['positiondescription'] = $positiondescription;
+	}
+	
+	// saves data from an array variable into the database
+	public function saveResumeIntoDatabase(&$sourcevar){
+		// set the user id from the array variable
+		$userid = isset($sourcevar['userID']) ? $sourcevar['userID'] : 0;
+		
+		// if the user id is not set, this function shouldn't be accessible, but test and return false just in case
+		if($userid == 0)
+			return false;
+		
+		// check if resume has name; return false if it does not
+		if(! isset($sourcevar['resumename']) || strlen(trim($sourcevar['resumename'])) == 0)
+			return false;
+		$resumename = $sourcevar['resumename'];
+		
+		// set resume ID if the variable exists, otherwise set to 0
+		$resumeid = isset($sourcevar['resumeid']) ? $sourcevar['resumeid'] : 0;
+		
+		// set position for targeted resume if the variable exists, otherwise set to empty string
+		$description = isset($sourcevar['description']) ? $sourcevar['description'] : '';
+		
+		// update if resume exists, insert if it does not
+		if($this->resumeExists($resumeid)){
+			// update the resume
+			if(! $this->updateResume($resumeid, $description))
+				return false;
+		} else {
+			// add the resume to the database
+			$resumeid = $this->addResume($userid, $resumename, $description);
+			
+			// check if insert failed
+			if($resumeid == 0)
+				return false;
+			
+			// insert must have succeeded, so save the new resume id
+			$sourcevar['resumeid'] = $resumeid;
+		}
+		
+		// get the contact info from the array variable if it's set
+		$fullname = isset($sourcevar['fullname']) ? $sourcevar['fullname'] : '';
+		$phonenumber = isset($sourcevar['phonenumber']) ? $sourcevar['phonenumber'] : '';
+		$address = isset($sourcevar['address']) ? $sourcevar['address'] : '';
+		
+		// update if contact info exists, insert if it does not
+		if($this->contactInfoExists($resumeid)){			
+			// update the contact info in the database
+			if(! $this->updateContactInfo($resumeid, $fullname, $phonenumber, $address))
+				return false;
+		} else {
+			// add the contact info to the database
+			if(! $this->addContactInfo($resumeid, $fullname, $phonenumber, $address))
+				return false;
+		}
+		
+		// get the employment history arrays from the array variable, if they are set
+		$employment_history_pk = isset($sourcevar['employment_history_pk']) ? $sourcevar['employment_history_pk'] : array();
+		$jobtitle = isset($sourcevar['jobtitle']) ? $sourcevar['jobtitle'] : array();
+		$startdate = isset($sourcevar['startdate']) ? $sourcevar['startdate'] : array();
+		$enddate = isset($sourcevar['enddate']) ? $sourcevar['enddate'] : array();
+		$positiondescription = isset($sourcevar['positiondescription']) ? $sourcevar['positiondescription'] : array();
+		
+		// for simplicity's sake, remove all current employment history entries for this resume, and then add the ones from the session
+		$this->deleteEmploymentHistory($resumeid);
+		
+		// loop over all employment history entries
+		for($i = 0; $i < count($jobtitle); $i++){				
+			// add the contact info to the database, saving the id in a temp variable
+			if($temp = $this->addEmploymentHistory($resumeid, $jobtitle[$i], $startdate[$i], $enddate[$i], $positiondescription[$i])){
+				// if ID was nonzero, save it as this entry's employment history id
+				$sourcevar['employment_history_pk'][$i] = $temp;
+			}
+		}
+		
+		// if we made it here, the add succeeded. return true
+		return true;
+	}
+	
+	// returns data from the database as an array variable, returns an empty array if it fails
+	public function getResumeAsArray($resumeid){
+		// set up new array to hold info
+		$retval = array();
+		
+		// check if resume exists in the database
+		if(! $this->resumeExists($resumeid))
+			return $retval;
+		
+		// get the static information
+		$retval = $this->getStaticInfo($resumeid);
+		
+		// append employment history entries
+		$this->appendEmploymentHistoryToArray($resumeid, $retval);
+		
+		// return the finished array of resume data
+		return $retval;
+	}
+};

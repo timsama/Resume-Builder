@@ -1,0 +1,9 @@
+<?php
+
+// clear session variables and then start fresh
+session_start();
+session_unset();
+session_destroy();
+
+// go to the contact information page
+header('Location: contact_information.php');

@@ -1,0 +1,32 @@
+<?php
+
+// include our custom php functions
+require_once 'functions.php';
+require_once 'session.php';
+
+// get a reference to the resume information
+$resumeInformation =& getSession();
+
+// preserve logged-in user's ID
+if(isset($resumeInformation['userID']))
+	$UID = $resumeInformation['userID'];
+
+// clear session variables and then start fresh
+session_unset();
+session_destroy();
+
+// start a new session
+session_start();
+
+// get a new reference to resume information
+$resumeInformation =& getSession();
+
+// restore the user ID
+if(isset($UID))
+	$resumeInformation['userID'] = $UID;
+
+// set the resume as a new resume
+$newResume = true;
+
+// go to the start page (which will set the user's ID back into the new session)
+header('Location: index.php');

@@ -1,0 +1,29 @@
+<?php
+
+// include our custom php functions
+require_once 'functions.php';
+require_once 'session.php';
+
+// get a reference to the resume information
+$resumeInformation =& getSession();
+
+// make sure the user is logged in
+ensureLoggedIn();
+
+// get logged-in user's ID
+$UID = $resumeInformation['userID'];
+
+// try to get resume ID
+$resumeid = isset($_POST['resumeid']) ? $_POST['resumeid'] : 0;
+
+// only delete resume if resume ID is valid
+if($resumeid > 0){
+	// delete resume from database
+	if(deleteResume($resumeid, $UID)){
+		// deleted successfully
+		header('Location: save_load.php?deleted=yes');
+	} else {
+		// delete failed
+		header('Location: save_load.php?deleted=no');
+	}
+}

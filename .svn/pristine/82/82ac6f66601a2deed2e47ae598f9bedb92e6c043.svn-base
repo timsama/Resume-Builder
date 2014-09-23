@@ -1,0 +1,211 @@
+/**
+ * CS4540 Assignment 3
+ * Author: Tim Winchester
+ */
+
+// open scope to contain variable tracking if form inputs have changed or not
+{
+	var changed = false;
+
+// start jquery
+$(function(){
+	// show the appropriate number of remove buttons
+	hideShowRemoveButtons();
+	
+	// if there are both complete and incomplete fields upon load, then this page was submitted to, so validate
+	if(($('.complete').size() > 0) && ($('.incomplete').size() > 0)){
+		validate('false');
+		changed = false;
+	}
+	
+	// make sure the "are you sure?" dialog pops up for all start new form links
+	$('a[href="new_resume.php"]').click(function(e){e.preventDefault(); if(confirm('This will delete all session data. Are you sure?')){location.href = this.href;}});
+	
+	// make changed become true when an input changes
+	$('input').change(function(){setChanged();});
+	$('textarea').change(function(){setChanged();});
+	
+	// make sure "unsubmitted data will be lost" dialog pops up whenever a link is clicked when the form has changed but hasn't been submitted (other than the new resume link, handled separately) 
+	$('a[href!="new_resume.php"]').click(function(e){if(changed){e.preventDefault(); if(confirm('Unsaved data will be lost. Continue?')){location.href = this.href;}}});
+});
+
+	// sets the form data as having been changed
+	function setChanged(){
+		changed = true;
+	}
+
+}
+
+// validates the inputs to a form
+function validate(displaymessage){	
+	// if there are no fields marked incomplete, then the field is complete
+	if($('.incomplete').size() != 0){
+		// send a message to the user that there are incomplete fields
+		if(displaymessage != 'false'){
+			alert('Some information is incomplete. Please fill out the highlighted fields.');
+		}
+
+		// apply/remove highlighting to incomplete/complete fields
+		$('.incomplete').addClass("incompletefield").removeClass('complete');
+		$('.complete').removeClass().addClass('complete');
+		$('input[name*="date"]').addClass('date');
+		
+		// uncheck the current page's icon
+		uncheck();
+		return false;
+	}
+	
+	// if we got here, everything is complete, so return true
+	return true;
+}
+
+// unchecks the page's icon in the event of validation failure
+function uncheck(){
+	// get the url of the page we are currently on
+	var sourceurl = $('[name="sourceurl"]').val();
+	
+	// uncheck the icon whose link matches it
+	$('a[href="' + sourceurl + '"] > img').attr('src', 'images/form_icon.png');
+}
+
+// validates that the named text input field is nonempty
+function fieldIsNonEmpty(name, section){
+	// if no section is defined, just select by name
+	var selector = (section.trim() == '') ? '[name="' + name + '"]' : '#section' + section + ' [name*="' + name + '"]';
+	var field = $(selector);
+	
+	// if trimmed version of field's value is of length zero, then add error message and return false
+	if(field.val().trim().length == 0){		
+		// mark as incomplete
+		field.addClass("incomplete");
+		
+		// validation failed so return false
+		return false;
+	}
+	
+	// set up date checking regular expression
+	var regex = /^\d\d\d\d-\d\d?-\d\d?$/;
+	
+	// if field is marked with date class but doesn't pass YYYY-MM-DD regex, return false
+	if(field.hasClass("date") && !regex.test(field.val())){		
+		// mark as incomplete
+		field.addClass("incomplete");
+		
+		// validation failed so return false
+		return false;
+	}
+
+	// passed validation, so mark as complete
+	field.removeClass("incomplete incompletefield").addClass("complete");
+	
+	// field wasn't empty, so return true
+	return true;
+}
+
+// resets a field to a default value if it is empty
+function defVal(name, defval){
+	// get the named field
+	var field = $('[name="' + name + '"]');
+	
+	// if the field's value empty, set it to the default value
+	if(field.val().length == 0)
+		field.val(defval);
+}
+
+// open scope to hold variable determining what field is being validated
+{
+	// keep track of which caption is being verified every 100 ms
+	var checkField;
+	
+	// starts checking every 100 ms whether caption text is valid. Used because selecting previously-entered text from a drop down
+	// doesn't trigger onChange
+	function startValidateField(name, section){
+		checkField = setInterval(function(){fieldIsNonEmpty(name, section);}, 100);
+	}
+	
+	// clears interval to stop verification checks every 100ms
+	function stopValidateField(){
+		clearInterval(checkField);
+	}
+}
+
+
+// open scope to store variable of how many employment history sections there are
+{
+	// initialize starting index
+	var sectionIndex = 0;
+	
+	// adds a new set of controls and increments sections
+	function addSection(){
+		// if the program still thinks that there are no sections, have it check again. I think it'll be pleasantly surprised :P
+		if(sectionIndex == 0){
+			sectionIndex = getNumberOfSections();
+		}
+		
+		var sectionstring = '';
+		
+		// add job title field
+		sectionstring += '<p>Title: <input type="text" name="jobtitle[]" class="incomplete" onfocus="startValidateField(\'jobtitle\', \'' + sectionIndex + '\')" onblur="stopValidateField(); fieldIsNonEmpty(\'jobtitle\', \'' + sectionIndex + '\');" /></p>';
+		
+		// add start and end date fields, and remove section button
+		sectionstring += '<p>Start Date (YYYY-MM-DD): <input type="text" name="startdate[]" class="incomplete date" onfocus="startValidateField(\'startdate\', \'' + sectionIndex + '\')" onblur="stopValidateField(); fieldIsNonEmpty(\'startdate\', \'' + sectionIndex + '\');" /> '
+			+ 'End Date (YYYY-MM-DD): <input type="text" name="enddate[]" class="incomplete date" onfocus="startValidateField(\'enddate\', \'' + sectionIndex + '\')" onblur="stopValidateField(); fieldIsNonEmpty(\'enddate\', \'' + sectionIndex + '\');" />'
+			+ '<input type="button" value="Remove Section" class="removebutton" onclick="removeSection(\'' + sectionIndex + '\')" /></p>';
+		
+		// add position description field
+		sectionstring += '<p>Position Description:<br><textarea name="positiondescription[]" rows="3" cols="100" class="incomplete"'
+			+ 'onfocus="startValidateField(\'positiondescription\', \'' + sectionIndex + '\')" onblur="stopValidateField(); fieldIsNonEmpty(\'positiondescription\', \'' + sectionIndex + '\');"></textarea></p>';
+		
+		// add section to sections container
+		$('#employmenthistory').append('<div id="section' + sectionIndex + '"></div>');
+		
+		// add controls to section
+		$('#section' + sectionIndex).append(sectionstring);
+		
+		// update which remove buttons to show
+		hideShowRemoveButtons();
+		
+		// increment number of sections
+		sectionIndex++;
+	}
+	
+	// removes a set of controls
+	function removeSection(i){
+		// if the section exists, remove it
+		if(sectionExists(i)){
+			// remove the section(i) div
+			$('#section' + i).remove();
+			
+			// do not modify the sectionIndex variable. It's easier to just increment the index of new sections than to have to keep track of which numbers have and haven't been used yet.
+			
+			// update which remove buttons to show
+			hideShowRemoveButtons();
+		}
+	}
+	
+	// checks if section(i) exists
+	function sectionExists(i){
+		return $('#section' + i).length != 0;
+	}
+	
+	// sets the remove buttons to visible or invisible depending on how many sections there are
+	function hideShowRemoveButtons(){
+		//if the number of sections is only one, do not show the remove section button for it. Otherwise, show them all
+		if(getNumberOfSections() == 1){
+			$('input[class="removebutton"]').hide();
+		} else {
+			$('input[class="removebutton"]').show();
+		}
+	}
+	
+	// returns the number of employment history sections that currently exist
+	function getNumberOfSections(){
+		return $('[id*="section"]').size();
+	}
+}
+
+// sends the user to the specified URL
+function goToURL(url){
+	// send the user to the url
+	window.location.href = url;
+}

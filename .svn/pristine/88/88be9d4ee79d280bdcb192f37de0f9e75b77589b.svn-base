@@ -1,0 +1,86 @@
+<?php
+
+// include our custom php functions
+require_once 'functions.php';
+require_once 'session.php';
+require_once 'referer.php';
+
+// get a reference to the resume information and set newResume to true if this is a new resume or false if it is not
+$resumeInformation =& $_SESSION['resume'];
+
+// initialize formface to empty
+$formface = '';
+
+// if resume is not new, try to pick up where we left off
+if(isset($resumeInformation['resumename'])){
+	// display welcome back message and links to incomplete forms
+	$formface .= addHeading('Welcome back!') . addParagraph('We will attempt to retrieve previous resume data.');
+	
+	// check if contact information has been entered
+	if(! formIsComplete('contactInfoComplete')){
+		// display contact information link
+		$formface .= openParagraph('Contact Information is incomplete. Please click the link to continue, using previously saved data: ');
+		$formface .= appendLink('Add/Edit Contact Information', 'contact_information.php') . closeParagraph();
+	}
+	// check if position sought has been entered
+	if(! formIsComplete('positionSoughtComplete')){
+		// display position sought link
+		$formface .= openParagraph('Position Sought is incomplete. Please click the link to continue, using previously saved data: ');
+		$formface .= appendLink('Add/Edit Position Sought', 'position_sought.php') . closeParagraph();
+	} 
+	// check if employment history has been entered
+	if(! formIsComplete('employmentHistoryComplete')){
+		// display employment history link
+		$formface .= openParagraph('Employment History is incomplete. Please click the link to continue, using previously saved data: ');
+		$formface .= appendLink('Add/Edit Employment History', 'employment_history.php') . closeParagraph();
+	}
+	// everything has been entered
+	else{
+		// display resume link
+		$formface .= addParagraph('Resume information complete! Please click the link to view your resume: ');
+		$formface .= openParagraph() . appendLink('View Resume', 'resume.php') . closeParagraph();
+	}
+	
+	// add section subheading
+	$formface .= addSubheading('Other Options:');
+	
+	// display link to save/load page
+	$formface .= addParagraph('If you would like to select a resume already stored in the database, please click the link: '. appendLink('Load Resume', 'save_load.php'));
+	
+	// display link to start new resume
+	$formface .= addParagraph('Or would you like to start a new resume? If so, please click the link: '. appendLink('Start New Resume', 'new_resume.php'));
+
+	// display the above information in the standard template
+	require 'template.php';
+
+} else {
+	// after this, it's no longer a new resume
+	$newResume = false;
+	
+	// display a welcome message and give a link to the contact information page
+	$formface .= addHeading('Welcome to Resume Builder!') . addParagraph('To build your resume, we\'ll take you through a series of forms so you can input the necessary information.');
+	
+	// start the HTML form
+	$formface .= startForm('contact_information.php');
+	
+	// add hidden field to store this page as the page we came from (in this case, we came here from new_resume)
+	$formface .= addHiddenField('sourceurl', 'new_resume.php');
+	
+	// add position description field
+	$formface .= addParagraph(addTextField('resumename', 'First, enter a filename for this resume (e.g. "Programming-Spring2014"): '));
+	
+	// add submit button
+	$formface .= appendSubmitButton();
+	
+	// end the HTML form
+	$formface .= closeForm();
+
+	// add section subheading
+	$formface .= addSubheading('Other Options:');
+	
+	// display link to save/load page
+	$formface .= addParagraph('If you would like to select a resume already stored in the database, please click the link: '. appendLink('Load Resume', 'save_load.php'));
+	
+	// display the above information in the new resume template
+	require 'template.php';
+}

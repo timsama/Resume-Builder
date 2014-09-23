@@ -1,0 +1,42 @@
+<?php
+
+// include our custom php functions
+require_once 'functions.php';
+require_once 'session.php';
+
+// initialize form face
+$formface = '';
+
+// add page heading
+$formface .= addHeading('Register New Account');
+
+// validate username and password
+if(validate()){
+	// move to the new resume page
+	header('Location: new_resume.php');
+} else {
+	// display an entry prompt depending on whether this is a first or subsequent attempt
+	if(registrationAttempted()){
+		// inform user their account was not added successfully
+		$formface .= addSubheading('Username is taken. Please enter a different username and a password:');
+	} else {
+		$formface .= addSubheading('Please enter a username and a password:');
+	}
+
+	// start the HTML form
+	$formface .= startForm('register.php');
+	
+	// add hidden field to store this page as the page we came from
+	$formface .= addHiddenField('sourceurl', 'register.php');
+	
+	// add user name and password fields
+	$formface .= addParagraph(addTextField('username', 'User Name: ') . '<br>' . addPasswordField('password', 'Password: '));
+	
+	// add submit button
+	$formface .= appendSubmitButton();
+}
+
+// end the HTML form
+$formface .= closeForm();
+
+require 'start_page.php';
